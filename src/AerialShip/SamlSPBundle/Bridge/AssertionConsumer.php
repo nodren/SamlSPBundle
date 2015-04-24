@@ -122,8 +122,16 @@ class AssertionConsumer implements RelyingPartyInterface
     protected function createSSOState(ServiceInfo $serviceInfo, Assertion $assertion)
     {
         $ssoState = $this->ssoStore->create();
-        $ssoState->setNameID($assertion->getSubject()->getNameID()->getValue());
-        $ssoState->setNameIDFormat($assertion->getSubject()->getNameID()->getFormat() ?: '');
+        if ($assertion->getSubject()->getNameID() === null)
+        {
+            $ssoState->setNameID($assertion->getAttribute('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name')->getFirstValue());
+            $ssoState->setNameIDFormat('urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress');
+        }
+        else
+        {
+            $ssoState->setNameID($assertion->getSubject()->getNameID()->getValue());
+            $ssoState->setNameIDFormat($assertion->getSubject()->getNameID()->getFormat() ?: '');
+        }
         $ssoState->setAuthenticationServiceName($serviceInfo->getAuthenticationService());
         $ssoState->setProviderID($serviceInfo->getProviderID());
         $ssoState->setSessionIndex($assertion->getAuthnStatement()->getSessionIndex());
